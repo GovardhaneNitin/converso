@@ -6,7 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/app/components/ui/table";
 import { cn, getSubjectColor } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
@@ -69,7 +69,7 @@ const CompanionsList = ({
                   <Image
                     src={`/icons/${subject}.svg`}
                     alt={subject}
-                    width={18}  
+                    width={18}
                     height={18}
                   />
                 </div>
