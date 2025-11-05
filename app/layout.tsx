@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import { NavigationProvider } from "./components/NavigationProvider";
 import LoadingBar from "./components/LoadingBar";
 
@@ -29,6 +30,7 @@ export default function RootLayout({
             <LoadingBar />
             <Navbar />
             {children}
+            <Footer />
           </NavigationProvider>
         </body>
       </html>
