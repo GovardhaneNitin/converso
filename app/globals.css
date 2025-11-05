@@ -223,4 +223,32 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Loading animations */
+  .loading-pulse {
+    animation: loading-pulse 1.5s ease-in-out infinite;
+  }
+
+  .loading-shimmer {
+    animation: loading-shimmer 2s infinite;
+  }
+
+  @keyframes loading-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes loading-shimmer {
+    0% {
+      background-position: -200px 0;
+    }
+    100% {
+      background-position: calc(200px + 100%) 0;
+    }
+  }
 }
