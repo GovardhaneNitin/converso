@@ -182,6 +182,10 @@ body {
     @apply items-center justify-center flex flex-col gap-4 w-full min-2xl:w-1/2 pt-20 text-center;
   }
 
+  .companion-form-container {
+    @apply bg-white rounded-2xl border border-border shadow-sm p-8 max-w-2xl mx-auto backdrop-blur-sm;
+  }
+
   .companion-section {
     @apply border-2 border-orange-500 w-2/3 max-sm:w-full flex flex-col gap-4 justify-center items-center rounded-lg;
   }
