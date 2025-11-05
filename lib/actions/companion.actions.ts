@@ -48,97 +48,124 @@ export const getAllCompanions = async ({
 };
 
 export const getCompanion = async (id: string) => {
-    const supabase = createSupabaseClient();
+  const supabase = createSupabaseClient();
 
-    const { data, error } = await supabase
-        .from('companions')
-        .select()
-        .eq('id', id);
+  const { data, error } = await supabase
+    .from("companions")
+    .select()
+    .eq("id", id);
 
-    if(error) return console.log(error);
+  if (error) return console.log(error);
 
-    return data[0];
-}
+  return data[0];
+};
 
 export const addToSessionHistory = async (companionId: string) => {
-    const { userId } = await auth();
-    const supabase = createSupabaseClient();
-    const { data, error } = await supabase.from('session_history')
-        .insert({
-            companion_id: companionId,
-            user_id: userId,
-        })
+  const { userId } = await auth();
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase.from("session_history").insert({
+    companion_id: companionId,
+    user_id: userId,
+  });
 
-    if(error) throw new Error(error.message);
+  if (error) throw new Error(error.message);
 
-    return data;
-}
+  return data;
+};
 
 export const getRecentSessions = async (limit = 10) => {
-    const supabase = createSupabaseClient();
-    const { data, error } = await supabase
-        .from('session_history')
-        .select(`companions:companion_id (*)`)
-        .order('created_at', { ascending: false })
-        .limit(limit)
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("session_history")
+    .select(`companions:companion_id (*)`)
+    .order("created_at", { ascending: false })
+    .limit(limit * 2); // Get more entries to ensure we have enough unique companions
 
-    if(error) throw new Error(error.message);
+  if (error) throw new Error(error.message);
 
-    return data.map(({ companions }) => companions);
-}
+  // Extract companions and remove duplicates based on ID
+  const companions = data.map(({ companions }) => companions).filter(Boolean);
+  const seen = new Set<string>();
+  const uniqueCompanions = companions.filter((companion) => {
+    const companionObj = companion as unknown as { id: string };
+    const id = companionObj?.id;
+    if (!id || seen.has(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+
+  // Return only the requested limit of unique companions
+  return uniqueCompanions.slice(0, limit);
+};
 
 export const getUserSessions = async (userId: string, limit = 10) => {
-    const supabase = createSupabaseClient();
-    const { data, error } = await supabase
-        .from('session_history')
-        .select(`companions:companion_id (*)`)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit)
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("session_history")
+    .select(`companions:companion_id (*)`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit * 2); // Get more entries to ensure we have enough unique companions
 
-    if(error) throw new Error(error.message);
+  if (error) throw new Error(error.message);
 
-    return data.map(({ companions }) => companions);
-}
+  // Extract companions and remove duplicates based on ID
+  const companions = data.map(({ companions }) => companions).filter(Boolean);
+  const seen = new Set<string>();
+  const uniqueCompanions = companions.filter((companion) => {
+    const companionObj = companion as unknown as { id: string };
+    const id = companionObj?.id;
+    if (!id || seen.has(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+
+  // Return only the requested limit of unique companions
+  return uniqueCompanions.slice(0, limit);
+};
 
 export const getUserCompanions = async (userId: string) => {
-    const supabase = createSupabaseClient();
-    const { data, error } = await supabase
-        .from('companions')
-        .select()
-        .eq('author', userId)
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("companions")
+    .select()
+    .eq("author", userId);
 
-    if(error) throw new Error(error.message);
+  if (error) throw new Error(error.message);
 
-    return data;
-}
+  return data;
+};
 
 export const newCompanionPermissions = async () => {
-    const { userId, has } = await auth();
-    const supabase = createSupabaseClient();
+  const { userId, has } = await auth();
+  const supabase = createSupabaseClient();
 
-    let limit = 0;
+  let limit = 0;
 
-    if(has({ plan: 'pro' })) {
-        return true;
-    } else if(has({ feature: "3_companion_limit" })) {
-        limit = 3;
-    } else if(has({ feature: "10_companion_limit" })) {
-        limit = 10;
-    }
+  if (has({ plan: "pro" })) {
+    return true;
+  } else if (has({ feature: "3_companion_limit" })) {
+    limit = 3;
+  } else if (has({ feature: "10_companion_limit" })) {
+    limit = 10;
+  }
 
-    const { data, error } = await supabase
-        .from('companions')
-        .select('id', { count: 'exact' })
-        .eq('author', userId)
+  const { data, error } = await supabase
+    .from("companions")
+    .select("id", { count: "exact" })
+    .eq("author", userId);
 
-    if(error) throw new Error(error.message);
+  if (error) throw new Error(error.message);
 
-    const companionCount = data?.length;
+  const companionCount = data?.length;
 
-    if(companionCount >= limit) {
-        return false
-    } else {
-        return true;
-    }
-}
+  if (companionCount >= limit) {
+    return false;
+  } else {
+    return true;
+  }
+};
