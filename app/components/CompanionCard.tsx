@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useNavigation } from "./NavigationProvider";
+import { useState } from "react";
+import { addBookmark, removeBookmark } from "@/lib/actions/companion.actions";
 
 interface CompanionCardProps {
   id: string;
@@ -10,6 +12,7 @@ interface CompanionCardProps {
   subject: string;
   duration: number;
   color: string;
+  bookmarked?: boolean;
 }
 
 const CompanionCard = ({
@@ -19,20 +22,48 @@ const CompanionCard = ({
   subject,
   duration,
   color,
+  bookmarked = false,
 }: CompanionCardProps) => {
   const { navigate, isLoading } = useNavigation();
+  const [isBookmarked, setIsBookmarked] = useState(bookmarked);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
 
   const handleLaunchLesson = () => {
     navigate(`/companions/${id}`);
+  };
+
+  const handleBookmarkToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsBookmarkLoading(true);
+    try {
+      if (isBookmarked) {
+        await removeBookmark(id);
+      } else {
+        await addBookmark(id);
+      }
+      setIsBookmarked(!isBookmarked);
+    } catch (error) {
+      console.error("Failed to toggle bookmark:", error);
+    } finally {
+      setIsBookmarkLoading(false);
+    }
   };
 
   return (
     <article className="companion-card" style={{ backgroundColor: color }}>
       <div className="flex justify-between items-center">
         <div className="subject-badge">{subject}</div>
-        <button className="companion-bookmark">
+        <button
+          className="companion-bookmark disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleBookmarkToggle}
+          disabled={isBookmarkLoading}
+        >
           <Image
-            src="/icons/bookmark.svg"
+            src={
+              isBookmarked
+                ? "/icons/bookmark-filled.svg"
+                : "/icons/bookmark.svg"
+            }
             alt="bookmark"
             width={12.5}
             height={15}

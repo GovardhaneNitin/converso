@@ -24,6 +24,7 @@ export const getAllCompanions = async ({
   subject,
   topic,
 }: GetAllCompanions) => {
+  const { userId } = await auth();
   const supabase = createSupabaseClient();
 
   let query = supabase.from("companions").select();
@@ -44,7 +45,41 @@ export const getAllCompanions = async ({
 
   if (error) throw new Error(error.message);
 
-  return companions;
+  // Get user's bookmarks
+  if (userId) {
+    try {
+      const { data: bookmarks, error: bookmarkError } = await supabase
+        .from("bookmarks")
+        .select("companion_id")
+        .eq("user_id", userId);
+
+      if (bookmarkError) {
+        console.error("Bookmark query error:", bookmarkError);
+      }
+
+      const bookmarkedIds = new Set(
+        bookmarks?.map((b) => b.companion_id) || []
+      );
+
+      // Add bookmarked property to each companion
+      return companions?.map((companion) => ({
+        ...companion,
+        bookmarked: bookmarkedIds.has(companion.id),
+      }));
+    } catch (error) {
+      console.error("Error fetching bookmarks:", error);
+      // Return companions without bookmarked status if there's an error
+      return companions?.map((companion) => ({
+        ...companion,
+        bookmarked: false,
+      }));
+    }
+  }
+
+  return companions?.map((companion) => ({
+    ...companion,
+    bookmarked: false,
+  }));
 };
 
 export const getCompanion = async (id: string) => {
@@ -168,4 +203,89 @@ export const newCompanionPermissions = async () => {
   } else {
     return true;
   }
+};
+
+export const addBookmark = async (companionId: string) => {
+  const { userId } = await auth();
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase.from("bookmarks").insert({
+    companion_id: companionId,
+    user_id: userId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+export const removeBookmark = async (companionId: string) => {
+  const { userId } = await auth();
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("bookmarks")
+    .delete()
+    .eq("companion_id", companionId)
+    .eq("user_id", userId);
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+export const isBookmarked = async (companionId: string) => {
+  const { userId } = await auth();
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("bookmarks")
+    .select("id")
+    .eq("companion_id", companionId)
+    .eq("user_id", userId)
+    .single();
+
+  if (error && error.code !== "PGRST116") throw new Error(error.message);
+
+  return !!data;
+};
+
+export const getUserBookmarks = async (userId: string, limit = 10) => {
+  const supabase = createSupabaseClient();
+
+  // Get bookmarks for the user
+  const { data: bookmarks, error: bookmarksError } = await supabase
+    .from("bookmarks")
+    .select("companion_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit * 2);
+
+  if (bookmarksError) throw new Error(bookmarksError.message);
+
+  if (!bookmarks || bookmarks.length === 0) {
+    return [];
+  }
+
+  // Extract companion IDs
+  const companionIds = bookmarks.map((b) => b.companion_id);
+
+  // Fetch the companions
+  const { data: companions, error: companionsError } = await supabase
+    .from("companions")
+    .select()
+    .in("id", companionIds);
+
+  if (companionsError) throw new Error(companionsError.message);
+
+  // Remove duplicates based on ID
+  const seen = new Set<string>();
+  const uniqueCompanions = (companions || []).filter((companion) => {
+    const id = companion?.id;
+    if (!id || seen.has(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+
+  // Return only the requested limit of unique companions
+  return uniqueCompanions.slice(0, limit);
 };
