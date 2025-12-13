@@ -5,7 +5,7 @@
 //   accountId: string;
 // };
 
-enum Subject {
+export enum Subject {
   maths = "maths",
   language = "language",
   science = "science",

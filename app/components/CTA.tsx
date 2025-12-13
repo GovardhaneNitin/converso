@@ -26,7 +26,13 @@ const Cta = () => {
         disabled={isLoading}
         className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <Image src="/icons/plus.svg" alt="plus" width={12} height={12} />
+        <Image
+          src="/icons/plus.svg"
+          alt="plus"
+          width={12}
+          height={12}
+          style={{ width: "auto", height: "auto" }}
+        />
         <p>{isLoading ? "Loading..." : "Build a New Companion"}</p>
       </button>
     </section>
