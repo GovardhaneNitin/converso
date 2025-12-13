@@ -9,7 +9,6 @@ const SearchInput = () => {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const query = searchParams.get("topic") || "";
 
   const [searchQuery, setSearchQuery] = useState("");
 
